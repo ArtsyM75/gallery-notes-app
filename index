@@ -1,0 +1,1517 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gallery Notes Tracker - Enhanced</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header Styles */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0;
+      color: #1f2937;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Button Styles */
+    .btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .btn-green { background: #22c55e; }
+    .btn-green:hover { background: #16a34a; }
+    .btn-red { background: #ef4444; }
+    .btn-red:hover { background: #dc2626; }
+    .btn-purple { background: #a855f7; }
+    .btn-purple:hover { background: #9333ea; }
+    .btn-yellow { background: #f59e0b; }
+    .btn-yellow:hover { background: #d97706; }
+    .btn-orange { background: #f97316; }
+    .btn-orange:hover { background: #ea580c; }
+    .btn-gray { background: #6b7280; }
+    .btn-gray:hover { background: #4b5563; }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    /* Card Styles */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .card h2, .card h3 {
+      margin: 0 0 16px 0;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .stat-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+    }
+
+    .stat-value {
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+    }
+
+    .stat-subtitle {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    .stat-sales .stat-title, .stat-sales .stat-value { color: #22c55e; }
+    .stat-returns .stat-title, .stat-returns .stat-value { color: #ef4444; }
+    .stat-net .stat-title, .stat-net .stat-value { color: #8b5cf6; }
+    .stat-approvals .stat-title, .stat-approvals .stat-value { color: #3b82f6; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #f1f5f9;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+      color: #64748b;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+
+    .tab:hover:not(.active) {
+      color: #1f2937;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Form Styles */
+    .form-group {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .form-control {
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    select.form-control {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 8px center;
+      background-repeat: no-repeat;
+      background-size: 16px;
+      padding-right: 40px;
+      appearance: none;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .quick-actions .btn {
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    /* Item Lists */
+    .item-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: #f8fafc;
+      border-left: 4px solid #e5e7eb;
+      transition: all 0.2s;
+    }
+
+    .item:hover {
+      background: #f1f5f9;
+    }
+
+    .item-content {
+      flex: 1;
+    }
+
+    .item-meta {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    .item-text {
+      font-size: 0.875rem;
+      margin-bottom: 8px;
+      color: #1f2937;
+    }
+
+    .item-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Note Type Colors */
+    .item-sale {
+      background: #dcfce7;
+      border-left-color: #22c55e;
+    }
+
+    .item-approval {
+      background: #dbeafe;
+      border-left-color: #3b82f6;
+    }
+
+    .item-return {
+      background: #fee2e2;
+      border-left-color: #ef4444;
+    }
+
+    .item-emergency {
+      background: #fef2f2;
+      border-left-color: #dc2626;
+      animation: pulse 2s infinite;
+    }
+
+    .item-general {
+      background: #f8fafc;
+      border-left-color: #64748b;
+    }
+
+    /* Task Priority Colors */
+    .task-high {
+      background: #fef2f2;
+      border-left-color: #ef4444;
+    }
+
+    .task-normal {
+      background: #fefbf2;
+      border-left-color: #f59e0b;
+    }
+
+    .task-low {
+      background: #f0fdf4;
+      border-left-color: #22c55e;
+    }
+
+    /* Tags */
+    .tag {
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .tag-artist {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .tag-client {
+      background: #fae8ff;
+      color: #9333ea;
+    }
+
+    .tag-amount {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    /* Table Styles */
+    .table-container {
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    tr:hover {
+      background: #f9fafb;
+    }
+
+    /* Gamification Elements */
+    .badges {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .badge {
+      background: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      text-align: center;
+      min-width: 60px;
+    }
+
+    .badge-value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1f2937;
+      display: block;
+    }
+
+    .badge-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .animate-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .header-controls {
+        justify-content: center;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group {
+        flex-direction: column;
+      }
+
+      .form-control {
+        min-width: auto;
+      }
+
+      .tabs {
+        flex-wrap: wrap;
+      }
+
+      .tab {
+        flex: 1;
+        text-align: center;
+        min-width: 120px;
+      }
+    }
+
+    /* Utility Classes */
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .text-muted { color: #6b7280; }
+    .text-sm { font-size: 0.875rem; }
+    .font-bold { font-weight: 700; }
+    .mb-4 { margin-bottom: 16px; }
+    .mt-4 { margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <h1>Gallery Notes Tracker</h1>
+        <p class="text-muted">Enhanced business management system</p>
+      </div>
+      <div class="header-controls">
+        <input id="dateInput" type="date" class="form-control" style="width: auto;" />
+        <button onclick="goToToday()" class="btn btn-gray">Today</button>
+        <button onclick="goToPrevious()" class="btn btn-gray">← Prev</button>
+        <button onclick="goToNext()" class="btn btn-gray">Next →</button>
+        
+        <div class="badges">
+          <div class="badge">
+            <span class="badge-value" id="points">0</span>
+            <span class="badge-label">Points</span>
+          </div>
+          <div class="badge">
+            <span class="badge-value" id="level">1</span>
+            <span class="badge-label">Level</span>
+          </div>
+          <div class="badge">
+            <span class="badge-value" id="streak">0</span>
+            <span class="badge-label">Streak</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+      <div class="stat-card stat-sales">
+        <h3 class="stat-title">Today's Sales</h3>
+        <p class="stat-value" id="todaySales">$0</p>
+        <p class="stat-subtitle" id="todaySalesCount">0 transactions</p>
+      </div>
+      <div class="stat-card stat-returns">
+        <h3 class="stat-title">Returns</h3>
+        <p class="stat-value" id="todayReturns">$0</p>
+        <p class="stat-subtitle" id="todayReturnsCount">0 returns</p>
+      </div>
+      <div class="stat-card stat-net">
+        <h3 class="stat-title">Net Sales</h3>
+        <p class="stat-value" id="todayNet">$0</p>
+        <p class="stat-subtitle">After returns</p>
+      </div>
+      <div class="stat-card stat-approvals">
+        <h3 class="stat-title">Approvals</h3>
+        <p class="stat-value" id="activeApprovals">$0</p>
+        <p class="stat-subtitle" id="approvalsCount">0 items</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('daily')">📅 Daily View</div>
+      <div class="tab" onclick="switchTab('monthly')">📊 Monthly Summary</div>
+      <div class="tab" onclick="switchTab('approvals')">📋 Approvals</div>
+      <div class="tab" onclick="switchTab('artists')">🎨 Artists</div>
+    </div>
+
+    <!-- Daily View Tab -->
+    <div id="tab-daily" class="tab-content active">
+      <!-- Quick Actions -->
+      <div class="card">
+        <h3>Quick Actions</h3>
+        <div class="quick-actions">
+          <button onclick="quickAdd('Sale')" class="btn btn-green">💰 Sale</button>
+          <button onclick="quickAdd('Approval')" class="btn" style="background:#3b82f6">📋 Approval</button>
+          <button onclick="quickAdd('Return')" class="btn btn-red">↩️ Return</button>
+          <button onclick="quickAdd('General')" class="btn btn-gray">📝 Note</button>
+          <button onclick="quickAdd('Emergency')" class="btn btn-red" style="animation:pulse 2s infinite">⚠️ Emergency</button>
+        </div>
+        
+        <!-- Smart Templates -->
+        <div class="form-group">
+          <select id="smartTemplate" onchange="applyTemplate(this.value)" class="form-control" style="flex: none; width: 200px;">
+            <option value="">Smart Templates...</option>
+            <option value="sale_artwork">Sale - Artwork</option>
+            <option value="approval_artwork">Approval - Artwork</option>
+            <option value="commission">Commission Request</option>
+            <option value="delivery">Delivery Scheduled</option>
+          </select>
+        </div>
+        
+        <form id="entryForm" onsubmit="addNote(event)">
+          <div class="form-group">
+            <textarea id="entryInput" class="form-control" placeholder="Enter note... Use $ for amounts, 'by Artist' for artists, 'to Client' for clients"></textarea>
+          </div>
+          <div class="form-group">
+            <button type="submit" class="btn">Add Note</button>
+            <button type="button" onclick="exportDailyReport()" class="btn btn-gray">📄 Daily Report</button>
+            <button type="button" onclick="exportJSON()" class="btn btn-gray">💾 Export</button>
+            <button type="button" onclick="document.getElementById('importFile').click()" class="btn btn-gray">📁 Import</button>
+            <input id="importFile" type="file" accept=".json" class="hidden" onchange="importFileText(this)" />
+            <button type="button" onclick="undo()" class="btn btn-gray">↶ Undo</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tasks Section -->
+      <div class="card">
+        <h3>Today's Tasks</h3>
+        <form id="taskForm" onsubmit="addTask(event)">
+          <div class="form-group">
+            <input id="taskInput" placeholder="New task..." class="form-control" />
+            <select id="taskPriority" class="form-control" style="flex: none; width: 120px;">
+              <option value="high">🔴 High</option>
+              <option value="normal" selected>🟡 Normal</option>
+              <option value="low">🟢 Low</option>
+            </select>
+            <button type="submit" class="btn">Add Task</button>
+          </div>
+        </form>
+        <div id="tasksList"></div>
+      </div>
+
+      <!-- Notes Display -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <h3 id="listTitle">Today's Activity</h3>
+          <div style="display: flex; gap: 8px;">
+            <input id="searchNotes" placeholder="Search..." class="form-control" style="width: 150px;" oninput="filterNotes()" />
+            <select id="filterType" onchange="filterNotes()" class="form-control" style="width: 120px;">
+              <option value="">All Types</option>
+              <option value="sale">Sales</option>
+              <option value="approval">Approvals</option>
+              <option value="return">Returns</option>
+              <option value="general">General</option>
+            </select>
+          </div>
+        </div>
+        <p class="text-muted text-sm mb-4" id="summary">—</p>
+        <ul id="itemsList" class="item-list"></ul>
+      </div>
+    </div>
+
+    <!-- Monthly Summary Tab -->
+    <div id="tab-monthly" class="tab-content">
+      <div class="card">
+        <h3>Monthly Performance</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div style="background: #dcfce7; padding: 16px; border-radius: 8px;">
+            <h4 style="margin: 0 0 8px 0; color: #166534;">Gross Sales</h4>
+            <p style="margin: 0; font-size: 1.5rem; font-weight: 700;" id="monthlyGross">$0</p>
+          </div>
+          <div style="background: #fee2e2; padding: 16px; border-radius: 8px;">
+            <h4 style="margin: 0 0 8px 0; color: #dc2626;">Returns</h4>
+            <p style="margin: 0; font-size: 1.5rem; font-weight: 700;" id="monthlyReturns">$0</p>
+          </div>
+          <div style="background: #ede9fe; padding: 16px; border-radius: 8px;">
+            <h4 style="margin: 0 0 8px 0; color: #7c3aed;">Net Sales</h4>
+            <p style="margin: 0; font-size: 1.5rem; font-weight: 700;" id="monthlyNet">$0</p>
+          </div>
+        </div>
+        
+        <!-- Fixed chart container with proper sizing -->
+        <div style="position: relative; height: 300px; width: 100%; margin-bottom: 24px;">
+          <canvas id="monthlyChart"></canvas>
+        </div>
+        
+        <div id="monthlySummaryTable"></div>
+      </div>
+    </div>
+
+    <!-- Approvals Tab -->
+    <div id="tab-approvals" class="tab-content">
+      <div class="card">
+        <h3>Add Item on Approval</h3>
+        <form id="approvalForm" onsubmit="addApprovalItem(event)">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            <input id="approvalClient" placeholder="Client Name" class="form-control" required />
+            <input id="approvalItem" placeholder="Item Description" class="form-control" required />
+            <input id="approvalArtist" placeholder="Artist Name" class="form-control" />
+            <input id="approvalAmount" type="number" placeholder="Amount" min="0" step="0.01" class="form-control" required />
+            <button type="submit" class="btn">Add Item</button>
+          </div>
+        </form>
+        <div id="approvalsList"></div>
+      </div>
+    </div>
+
+    <!-- Artists Tab -->
+    <div id="tab-artists" class="tab-content">
+      <div class="card">
+        <h3>Artist Performance</h3>
+        <div id="artistSummary"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // Enhanced state management
+  let state = {
+    notes: [],
+    tasks: [],
+    approvalItems: [],
+    dailySummary: {},
+    artistSummary: {},
+    points: 0,
+    level: 1,
+    streak: 0,
+    lastActive: null,
+    achievements: [],
+    history: [],
+    currentDate: todayISO(),
+    activeTab: 'daily',
+    _imported: false
+  };
+
+  let lastDeleted = null;
+  let monthlyChartInstance = null;
+  const LS_KEY = 'gallery_notes_enhanced_v2';
+  const POINTS = { note:10, sale:50, approval:30, task:15, import:5, export:2 };
+
+  // Helper functions
+  function todayISO(){ return new Date().toISOString().split('T')[0]; }
+  function nowTime(){ return new Date().toLocaleTimeString(); }
+  function idNow(){ return String(Date.now() + Math.floor(Math.random()*999)); }
+  function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch{} }
+  function load(){ try{ const raw = localStorage.getItem(LS_KEY); if(raw) state = Object.assign(state, JSON.parse(raw)); }catch{} }
+
+  function parseAmount(text){
+    const m = String(text||'').match(/\$(\d{1,3}(?:[,\d]*)(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)/);
+    if(!m) return undefined;
+    const num = Number(m[1].replace(/,/g,''));
+    return isNaN(num) ? undefined : num;
+  }
+
+  function extractArtist(text){
+    if(!text) return '';
+    const by = text.match(/\bby\s+([A-Z][\w .'-]{1,80})/i);
+    if(by) return by[1].trim();
+    const hash = text.match(/#([A-Za-z0-9_]+)/);
+    if(hash) return hash[1].trim();
+    return '';
+  }
+
+  function extractClient(text){
+    if(!text) return '';
+    const to = text.match(/\b(?:to|for)\s+([A-Z][\w .'-]{1,80})/i);
+    if(to) return to[1].trim();
+    return '';
+  }
+
+  function detectType(text){
+    if(!text) return 'general';
+    const lower = text.toLowerCase();
+    if(lower.includes('sold') || lower.includes('sale')) return 'sale';
+    if(lower.includes('approval')) return 'approval';
+    if(lower.includes('return')) return 'return';
+    if(lower.includes('⚠️') || lower.includes('emergency')) return 'emergency';
+    return 'general';
+  }
+
+  // Navigation functions
+  function goToToday(){
+    state.currentDate = todayISO();
+    document.getElementById('dateInput').value = state.currentDate;
+    updateDisplay();
+  }
+
+  function goToPrevious(){
+    const date = new Date(state.currentDate);
+    date.setDate(date.getDate() - 1);
+    state.currentDate = date.toISOString().split('T')[0];
+    document.getElementById('dateInput').value = state.currentDate;
+    updateDisplay();
+  }
+
+  function goToNext(){
+    const date = new Date(state.currentDate);
+    date.setDate(date.getDate() + 1);
+    state.currentDate = date.toISOString().split('T')[0];
+    document.getElementById('dateInput').value = state.currentDate;
+    updateDisplay();
+  }
+
+  // Smart templates
+  function applyTemplate(template){
+    const input = document.getElementById('entryInput');
+    const templates = {
+      sale_artwork: 'Sold [Title] by [Artist] to [Client] $',
+      approval_artwork: 'Sent on approval to [Client]: [Title] by [Artist] $',
+      commission: 'Commission request from [Client] for [Artist]: [Description]',
+      delivery: 'Delivered to [Client]: [Item] by [Artist]'
+    };
+    if(templates[template]){
+      input.value = templates[template];
+      input.focus();
+    }
+  }
+
+  function quickAdd(type){
+    const input = document.getElementById('entryInput');
+    const templates = {
+      'Sale': 'Sold to [Client]: [Item] by [Artist] $',
+      'Approval': 'Sent on approval to [Client]: [Item] by [Artist] $',
+      'Return': 'Return from [Client]: [Item] $',
+      'General': 'General note: ',
+      'Emergency': '⚠️ ALERT: '
+    };
+    input.value = templates[type] || '';
+    input.focus();
+  }
+
+  // Core functions
+  function addNote(e){
+    e.preventDefault();
+    const content = document.getElementById('entryInput').value.trim();
+    if(!content) return;
+
+    const amount = parseAmount(content);
+    const type = detectType(content);
+    const artist = extractArtist(content);
+    const client = extractClient(content);
+
+    const note = {
+      id: idNow(),
+      content,
+      amount,
+      type,
+      artist,
+      client,
+      time: nowTime(),
+      date: state.currentDate
+    };
+
+    state.notes.unshift(note);
+    updateArtistSummary(artist, type, amount);
+    updateDailySummary();
+    awardPoints(type);
+    save();
+    updateDisplay();
+    document.getElementById('entryInput').value = '';
+    
+    if(amount > 0) celebrate(type);
+  }
+
+  function addTask(e){
+    e.preventDefault();
+    const content = document.getElementById('taskInput').value.trim();
+    const priority = document.getElementById('taskPriority').value;
+    if(!content) return;
+
+    const task = {
+      id: idNow(),
+      content,
+      priority,
+      completed: false,
+      date: state.currentDate
+    };
+
+    state.tasks.unshift(task);
+    save();
+    renderTasks();
+    document.getElementById('taskInput').value = '';
+  }
+
+  function addApprovalItem(e){
+    e.preventDefault();
+    const client = document.getElementById('approvalClient').value.trim();
+    const item = document.getElementById('approvalItem').value.trim();
+    const artist = document.getElementById('approvalArtist').value.trim();
+    const amount = parseFloat(document.getElementById('approvalAmount').value);
+
+    if(!client || !item || !amount) return;
+
+    const approval = {
+      id: idNow(),
+      clientName: client,
+      itemDescription: item,
+      artistName: artist,
+      amount,
+      status: 'on_approval',
+      dateAdded: state.currentDate,
+      history: []
+    };
+
+    state.approvalItems.unshift(approval);
+
+    // Add corresponding note
+    const note = {
+      id: idNow(),
+      content: `Sent on approval to ${client}: ${item}${artist ? ' by ' + artist : ''} $${amount}`,
+      amount,
+      type: 'approval',
+      artist,
+      client,
+      time: nowTime(),
+      date: state.currentDate
+    };
+
+    state.notes.unshift(note);
+    updateArtistSummary(artist, 'approval', amount);
+    updateDailySummary();
+    save();
+    updateDisplay();
+    document.getElementById('approvalForm').reset();
+  }
+
+  function updateArtistSummary(artist, type, amount){
+    if(!artist || !amount) return;
+    
+    if(!state.artistSummary[artist]){
+      state.artistSummary[artist] = {
+        totalSales: 0,
+        totalReturns: 0,
+        salesCount: 0,
+        returnsCount: 0,
+        lastActivity: state.currentDate
+      };
+    }
+
+    const summary = state.artistSummary[artist];
+    if(type === 'sale'){
+      summary.totalSales += amount;
+      summary.salesCount++;
+    } else if(type === 'return'){
+      summary.totalReturns += amount;
+      summary.returnsCount++;
+    }
+    summary.lastActivity = state.currentDate;
+  }
+
+  function updateDailySummary(){
+    const dateNotes = state.notes.filter(n => n.date === state.currentDate);
+    const sales = dateNotes.filter(n => n.type === 'sale').reduce((sum, n) => sum + (n.amount || 0), 0);
+    const returns = dateNotes.filter(n => n.type === 'return').reduce((sum, n) => sum + (n.amount || 0), 0);
+    
+    if(!state.dailySummary[state.currentDate]){
+      state.dailySummary[state.currentDate] = {};
+    }
+    
+    state.dailySummary[state.currentDate] = {
+      sales,
+      returns,
+      netSales: sales - returns
+    };
+  }
+
+  function awardPoints(kind){
+    const pts = POINTS[kind] || POINTS.note;
+    state.points += pts;
+    state.history.unshift({ date: todayISO(), points: pts, reason: kind });
+    
+    const newLevel = Math.floor(state.points / 500) + 1;
+    if(newLevel > state.level){
+      state.level = newLevel;
+      triggerConfetti();
+    }
+
+    // Streak logic
+    const today = todayISO();
+    if(state.lastActive !== today){
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      if(state.lastActive === yesterday){
+        state.streak++;
+      } else {
+        state.streak = 1;
+      }
+      state.lastActive = today;
+    }
+  }
+
+  function celebrate(type){
+    if(window.confetti){
+      const colors = type === 'sale' ? ['#22c55e', '#16a34a'] : 
+                    type === 'approval' ? ['#3b82f6', '#2563eb'] : ['#ef4444', '#dc2626'];
+      confetti({
+        particleCount: type === 'sale' ? 100 : 50,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors
+      });
+    }
+  }
+
+  function triggerConfetti(){
+    if(window.confetti){
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.4 } });
+    }
+  }
+
+  // Tab switching
+  function switchTab(tabName){
+    state.activeTab = tabName;
+    
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+    
+    document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    
+    updateDisplay();
+    save();
+  }
+
+  // Render functions
+  function renderNotes(){
+    const currentNotes = state.notes.filter(n => n.date === state.currentDate);
+    const filtered = filterNotesArray(currentNotes);
+    
+    const itemsList = document.getElementById('itemsList');
+    let total = 0;
+    
+    itemsList.innerHTML = ''; // clear
+    filtered.forEach(note => {
+      const li = document.createElement('li');
+      li.className = `item item-${note.type} animate-in`;
+
+      const content = document.createElement('div');
+      content.className = 'item-content';
+      const meta = document.createElement('div');
+      meta.className = 'item-meta';
+      meta.textContent = `${note.time} • ${note.type}`;
+      const text = document.createElement('div');
+      text.className = 'item-text';
+      text.textContent = note.content; // textContent prevents XSS
+      const tags = document.createElement('div');
+      tags.className = 'item-tags';
+      if (note.artist) { const t = document.createElement('span'); t.className='tag tag-artist'; t.textContent = note.artist; tags.appendChild(t); }
+      if (note.client) { const t = document.createElement('span'); t.className='tag tag-client'; t.textContent = note.client; tags.appendChild(t); }
+      if (note.amount) { const t = document.createElement('span'); t.className='tag tag-amount'; t.textContent = `$${note.amount.toLocaleString()}`; tags.appendChild(t); }
+
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+      const btnEdit = document.createElement('button');
+      btnEdit.className = 'btn btn-small'; btnEdit.textContent = 'Edit';
+      btnEdit.addEventListener('click', () => editNote(note.id));
+      const btnDel = document.createElement('button');
+      btnDel.className = 'btn btn-small btn-gray'; btnDel.textContent = 'Delete';
+      btnDel.addEventListener('click', () => deleteNote(note.id));
+
+      actions.appendChild(btnEdit); actions.appendChild(btnDel);
+      content.appendChild(meta); content.appendChild(text); content.appendChild(tags);
+      li.appendChild(content); li.appendChild(actions);
+      itemsList.appendChild(li);
+    });
+    
+    document.getElementById('summary').textContent = 
+      `${filtered.length} items${total ? ' • Total: $' + total.toLocaleString() : ''}`;
+  }
+
+  function renderTasks(){
+    const currentTasks = state.tasks.filter(t => 
+      t.date === state.currentDate || (!t.completed && new Date(t.date) <= new Date(state.currentDate))
+    );
+    
+    const tasksList = document.getElementById('tasksList');
+    tasksList.innerHTML = currentTasks.length > 0 ?
+      currentTasks.map(task => `
+        <div class="item task-${task.priority} animate-in" style="margin-top: 12px;">
+          <div class="item-content">
+            <div style="display: flex; align-items: center;">
+              <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                     onchange="toggleTask(${task.id})" style="margin-right: 12px;" />
+              <span style="${task.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">
+                ${task.priority === 'high' ? '🔴' : task.priority === 'low' ? '🟢' : '🟡'} ${task.content}
+              </span>
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="btn btn-small" onclick="editTask(${task.id})">Edit</button>
+            <button class="btn btn-small btn-gray" onclick="deleteTask(${task.id})">Delete</button>
+          </div>
+        </div>
+      `).join('') :
+      '<div class="text-center text-muted" style="padding: 40px;">No tasks for today</div>';
+  }
+
+  function renderApprovals(){
+    const onApproval = state.approvalItems.filter(i => i.status === 'on_approval');
+    const approvalsList = document.getElementById('approvalsList');
+    
+    approvalsList.innerHTML = `
+      <h4 style="margin: 24px 0 12px 0;">Current Items (${onApproval.length})</h4>
+      ${onApproval.length > 0 ? 
+        `<div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Client</th><th>Item</th><th>Artist</th><th>Amount</th><th>Date</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              ${onApproval.map(item => `
+                <tr>
+                  <td>${item.clientName}</td>
+                  <td>${item.itemDescription}</td>
+                  <td>${item.artistName || '-'}</td>
+                  <td>$${item.amount.toLocaleString()}</td>
+                  <td>${new Date(item.dateAdded).toLocaleDateString()}</td>
+                  <td>
+                    <button class="btn btn-small btn-green" onclick="markAsSold(${item.id})">Sold</button>
+                    <button class="btn btn-small btn-red" onclick="markAsReturned(${item.id})" style="margin-left: 8px;">Returned</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>` :
+        '<p class="text-muted">No items on approval</p>'
+      }
+    `;
+  }
+
+  function renderArtistSummary(){
+    const artists = Object.entries(state.artistSummary)
+      .map(([name, data]) => ({
+        name,
+        ...data,
+        netSales: data.totalSales - data.totalReturns
+      }))
+      .sort((a, b) => b.netSales - a.netSales);
+
+    const artistSummary = document.getElementById('artistSummary');
+    artistSummary.innerHTML = artists.length > 0 ?
+      `<div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Artist</th><th>Sales</th><th>Count</th><th>Returns</th><th>Net Sales</th><th>Last Activity</th></tr>
+          </thead>
+          <tbody>
+            ${artists.map(artist => `
+              <tr>
+                <td class="font-bold">${artist.name}</td>
+                <td>$${artist.totalSales.toLocaleString()}</td>
+                <td>${artist.salesCount}</td>
+                <td>$${artist.totalReturns.toLocaleString()}</td>
+                <td class="font-bold">$${artist.netSales.toLocaleString()}</td>
+                <td>${new Date(artist.lastActivity).toLocaleDateString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>` :
+      '<p class="text-muted">No artist data available</p>';
+  }
+
+  function renderMonthlySummary(){
+    const currentMonth = state.currentDate.slice(0, 7);
+    const monthlyData = Object.entries(state.dailySummary)
+      .filter(([date]) => date.startsWith(currentMonth))
+      .sort(([a], [b]) => a.localeCompare(b));
+
+    let monthlyGross = 0, monthlyReturns = 0;
+    monthlyData.forEach(([, data]) => {
+      monthlyGross += data.sales || 0;
+      monthlyReturns += data.returns || 0;
+    });
+
+    document.getElementById('monthlyGross').textContent = '$' + monthlyGross.toLocaleString();
+    document.getElementById('monthlyReturns').textContent = '$' + monthlyReturns.toLocaleString();
+    document.getElementById('monthlyNet').textContent = '$' + (monthlyGross - monthlyReturns).toLocaleString();
+
+    // Render chart
+    const ctx = document.getElementById('monthlyChart');
+    if(ctx && window.Chart){
+      if(monthlyChartInstance){
+        monthlyChartInstance.destroy();
+      }
+
+      monthlyChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: monthlyData.map(([date]) => new Date(date).getDate()),
+          datasets: [{
+            label: 'Sales',
+            data: monthlyData.map(([, data]) => data.sales || 0),
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            tension: 0.1
+          }, {
+            label: 'Returns',
+            data: monthlyData.map(([, data]) => data.returns || 0),
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false, // This is the key fix!
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: value => '$' + value.toLocaleString()
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+            }
+          }
+        }
+      });
+    }
+
+    // Render table
+    const table = document.getElementById('monthlySummaryTable');
+    table.innerHTML = monthlyData.length > 0 ?
+      `<h4 style="margin: 24px 0 12px 0;">Daily Breakdown</h4>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Sales</th><th>Returns</th><th>Net</th></tr>
+          </thead>
+          <tbody>
+            ${monthlyData.map(([date, data]) => `
+              <tr style="${date === state.currentDate ? 'background: #fef3c7; font-weight: 600;' : ''}">
+                <td>${new Date(date).toLocaleDateString()}</td>
+                <td>$${(data.sales || 0).toLocaleString()}</td>
+                <td>$${(data.returns || 0).toLocaleString()}</td>
+                <td>$${(data.netSales || 0).toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>` :
+      '<p class="text-muted">No data for this month</p>';
+  }
+
+  // Update functions
+  function updateStats(){
+    const currentNotes = state.notes.filter(n => n.date === state.currentDate);
+    const sales = currentNotes.filter(n => n.type === 'sale');
+    const returns = currentNotes.filter(n => n.type === 'return');
+    const salesTotal = sales.reduce((sum, n) => sum + (n.amount || 0), 0);
+    const returnsTotal = returns.reduce((sum, n) => sum + (n.amount || 0), 0);
+    const activeApprovals = state.approvalItems.filter(i => i.status === 'on_approval');
+    const approvalsTotal = activeApprovals.reduce((sum, i) => sum + i.amount, 0);
+
+    document.getElementById('todaySales').textContent = '$' + salesTotal.toLocaleString();
+    document.getElementById('todaySalesCount').textContent = sales.length + ' transactions';
+    document.getElementById('todayReturns').textContent = '$' + returnsTotal.toLocaleString();
+    document.getElementById('todayReturnsCount').textContent = returns.length + ' returns';
+    document.getElementById('todayNet').textContent = '$' + (salesTotal - returnsTotal).toLocaleString();
+    document.getElementById('activeApprovals').textContent = '$' + approvalsTotal.toLocaleString();
+    document.getElementById('approvalsCount').textContent = activeApprovals.length + ' items';
+
+    document.getElementById('points').textContent = state.points;
+    document.getElementById('level').textContent = state.level;
+    document.getElementById('streak').textContent = state.streak;
+  }
+
+  function updateDisplay(){
+    document.getElementById('listTitle').textContent = `Notes for ${new Date(state.currentDate).toLocaleDateString()}`;
+    updateStats();
+    
+    if(state.activeTab === 'daily'){
+      renderNotes();
+      renderTasks();
+    } else if(state.activeTab === 'monthly'){
+      renderMonthlySummary();
+    } else if(state.activeTab === 'approvals'){
+      renderApprovals();
+    } else if(state.activeTab === 'artists'){
+      renderArtistSummary();
+    }
+  }
+
+  // Filter and search
+  function filterNotes(){
+    renderNotes(); // Re-render with current filters
+  }
+
+  function filterNotesArray(notes){
+    const search = document.getElementById('searchNotes')?.value.toLowerCase() || '';
+    const type = document.getElementById('filterType')?.value || '';
+    
+    return notes.filter(note => {
+      const matchesSearch = !search || note.content.toLowerCase().includes(search);
+      const matchesType = !type || note.type === type;
+      return matchesSearch && matchesType;
+    });
+  }
+
+  // Action functions
+  function editNote(id){
+    const note = state.notes.find(n => n.id === id);
+    if(!note) return;
+    
+    const newContent = prompt('Edit note:', note.content);
+    if(newContent === null) return;
+    
+    note.content = newContent.trim();
+    note.amount = parseAmount(note.content);
+    note.type = detectType(note.content);
+    note.artist = extractArtist(note.content);
+    note.client = extractClient(note.content);
+    
+    updateDailySummary();
+    save();
+    updateDisplay();
+  }
+
+  function deleteNote(id){
+    if(!confirm('Delete this note?')) return;
+    
+    const index = state.notes.findIndex(n => n.id === id);
+    if(index !== -1){
+      lastDeleted = state.notes.splice(index, 1)[0];
+      updateDailySummary();
+      save();
+      updateDisplay();
+    }
+  }
+
+  function editTask(id){
+    const task = state.tasks.find(t => t.id === id);
+    if(!task) return;
+    
+    const newContent = prompt('Edit task:', task.content);
+    if(newContent !== null){
+      task.content = newContent.trim();
+      save();
+      renderTasks();
+    }
+  }
+
+  function deleteTask(id){
+    if(confirm('Delete this task?')){
+      state.tasks = state.tasks.filter(t => t.id !== id);
+      save();
+      renderTasks();
+    }
+  }
+
+  function toggleTask(id){
+    const task = state.tasks.find(t => t.id === id);
+    if(task){
+      task.completed = !task.completed;
+      save();
+      renderTasks();
+    }
+  }
+
+  function markAsSold(id){
+    const item = state.approvalItems.find(i => i.id === id);
+    if(!item) return;
+    
+    if(confirm(`Mark "${item.itemDescription}" as SOLD to ${item.clientName}?`)){
+      item.status = 'sold';
+      item.dateUpdated = state.currentDate;
+      
+      const note = {
+        id: idNow(),
+        content: `Sold to ${item.clientName}: ${item.itemDescription}${item.artistName ? ' by ' + item.artistName : ''} $${item.amount}`,
+        amount: item.amount,
+        type: 'sale',
+        artist: item.artistName,
+        client: item.clientName,
+        time: nowTime(),
+        date: state.currentDate
+      };
+      
+      state.notes.unshift(note);
+      updateArtistSummary(item.artistName, 'sale', item.amount);
+      updateDailySummary();
+      save();
+      updateDisplay();
+      celebrate('sale');
+    }
+  }
+
+  function markAsReturned(id){
+    const item = state.approvalItems.find(i => i.id === id);
+    if(!item) return;
+    
+    if(confirm(`Mark "${item.itemDescription}" as RETURNED from ${item.clientName}?`)){
+      item.status = 'returned';
+      item.dateUpdated = state.currentDate;
+      
+      const note = {
+        id: idNow(),
+        content: `Return from ${item.clientName}: ${item.itemDescription}${item.artistName ? ' by ' + item.artistName : ''} $${item.amount}`,
+        amount: item.amount,
+        type: 'return',
+        artist: item.artistName,
+        client: item.clientName,
+        time: nowTime(),
+        date: state.currentDate
+      };
+      
+      state.notes.unshift(note);
+      updateArtistSummary(item.artistName, 'return', item.amount);
+      updateDailySummary();
+      save();
+      updateDisplay();
+    }
+  }
+
+  function undo(){
+    if(lastDeleted){
+      state.notes.unshift(lastDeleted);
+      lastDeleted = null;
+      updateDailySummary();
+      save();
+      updateDisplay();
+      alert('Undo successful');
+    } else {
+      alert('Nothing to undo');
+    }
+  }
+
+  // Export/Import functions
+  function exportJSON(){
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gallery-backup-${todayISO()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportDailyReport(){
+    const currentNotes = state.notes.filter(n => n.date === state.currentDate);
+    const sales = currentNotes.filter(n => n.type === 'sale');
+    const returns = currentNotes.filter(n => n.type === 'return');
+    const salesTotal = sales.reduce((sum, n) => sum + (n.amount || 0), 0);
+    const returnsTotal = returns.reduce((sum, n) => sum + (n.amount || 0), 0);
+    
+    let report = `DAILY BUSINESS REPORT\n`;
+    report += `Date: ${new Date(state.currentDate).toLocaleDateString()}\n`;
+    report += `Generated: ${new Date().toLocaleString()}\n`;
+    report += `${'='.repeat(40)}\n\n`;
+    
+    report += `FINANCIAL SUMMARY\n`;
+    report += `Gross Sales: $${salesTotal.toLocaleString()}\n`;
+    report += `Returns: $${returnsTotal.toLocaleString()}\n`;
+    report += `Net Sales: $${(salesTotal - returnsTotal).toLocaleString()}\n\n`;
+    
+    report += `DAILY ACTIVITY\n`;
+    report += `${'='.repeat(20)}\n`;
+    currentNotes.forEach(note => {
+      report += `${note.time} [${note.type.toUpperCase()}] ${note.content}`;
+      if(note.amount) report += ` ($${note.amount.toLocaleString()})`;
+      report += `\n`;
+    });
+    
+    const blob = new Blob([report], {type:'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `daily-report-${state.currentDate}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function importFileText(input){
+    const file = input.files[0];
+    if(!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        const imported = JSON.parse(e.target.result);
+        
+        // Merge data safely
+        if(imported.notes) state.notes = [...imported.notes, ...state.notes];
+        if(imported.tasks) state.tasks = [...imported.tasks, ...state.tasks];
+        if(imported.approvalItems) state.approvalItems = [...imported.approvalItems, ...state.approvalItems];
+        if(imported.dailySummary) state.dailySummary = {...state.dailySummary, ...imported.dailySummary};
+        if(imported.artistSummary) state.artistSummary = {...state.artistSummary, ...imported.artistSummary};
+        
+        state._imported = true;
+        awardPoints('import');
+        save();
+        updateDisplay();
+        alert('Import successful!');
+      } catch(error){
+        alert('Import failed: Invalid file format');
+      }
+    };
+    reader.readAsText(file);
+    input.value = '';
+  }
+
+  // Initialize
+  function init(){
+    load();
+    document.getElementById('dateInput').value = state.currentDate;
+    document.getElementById('dateInput').addEventListener('change', function(e){
+      state.currentDate = e.target.value;
+      save();
+      updateDisplay();
+    });
+    
+    // Switch to saved active tab
+    switchTab(state.activeTab);
+    updateDisplay();
+  }
+
+  // Expose functions to global scope
+  window.switchTab = switchTab;
+  window.goToToday = goToToday;
+  window.goToPrevious = goToPrevious;
+  window.goToNext = goToNext;
+  window.quickAdd = quickAdd;
+  window.applyTemplate = applyTemplate;
+  window.editNote = editNote;
+  window.deleteNote = deleteNote;
+  window.editTask = editTask;
+  window.deleteTask = deleteTask;
+  window.toggleTask = toggleTask;
+  window.markAsSold = markAsSold;
+  window.markAsReturned = markAsReturned;
+  window.undo = undo;
+  window.exportJSON = exportJSON;
+  window.exportDailyReport = exportDailyReport;
+  window.importFileText = importFileText;
+  window.filterNotes = filterNotes;
+
+  // Start the app
+  init();
+})();
+</script>
+</body>
+</html>
