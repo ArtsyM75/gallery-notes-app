@@ -794,6 +794,7 @@
 
   // Core functions
   function addNote(e){
+    console.log('addNote called'); // Debug line
     e.preventDefault();
     const content = document.getElementById('entryInput').value.trim();
     if(!content) return;
